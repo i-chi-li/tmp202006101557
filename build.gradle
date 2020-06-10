@@ -1,0 +1,128 @@
+plugins {
+    id "net.ltgt.apt-eclipse" version "0.21"
+    id "com.github.johnrengelman.shadow" version "5.2.0"
+    id "application"
+    // Kotlin JVM
+    id "org.jetbrains.kotlin.jvm" version "1.3.72"
+    // Kotlin アノテーション処理用
+    id "org.jetbrains.kotlin.kapt" version "1.3.72"
+}
+
+
+
+version "0.1"
+group "micronaut.plane"
+
+repositories {
+    mavenCentral()
+    maven { url "https://jcenter.bintray.com" }
+}
+
+configurations {
+    // for dependencies that are needed for development only
+    developmentOnly 
+}
+
+dependencies {
+    // Micronaut BOM （ライブラリバージョンを自動解決する）
+    kapt platform("io.micronaut:micronaut-bom:$micronautVersion")
+    // 依存性注入用
+    kapt "io.micronaut:micronaut-inject-java"
+    // コンパイル時値検証用
+    kapt "io.micronaut:micronaut-validation"
+
+    // Micronaut BOM （ライブラリバージョンを自動解決する）
+    kaptTest platform("io.micronaut:micronaut-bom:$micronautVersion")
+    // コンパイル時値検証用
+    kaptTest "io.micronaut:micronaut-validation"
+
+    // [ Kotlin ]
+    // Kotlin 標準ライブラリ
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "org.jetbrains.kotlin:kotlin-reflect"
+
+    annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+    annotationProcessor "io.micronaut:micronaut-inject-java"
+    annotationProcessor "io.micronaut:micronaut-validation"
+
+    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    implementation "io.micronaut:micronaut-inject"
+    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut:micronaut-runtime"
+    implementation "io.micronaut:micronaut-http-server-netty"
+    implementation "io.micronaut:micronaut-http-client"
+    // Micronaut XML for Jackson
+    implementation "io.micronaut.xml:micronaut-jackson-xml"
+
+    // Jackson Kotlin 用拡張
+    runtimeOnly "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8"
+    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
+
+    testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
+
+    testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testImplementation "io.micronaut.test:micronaut-test-junit5"
+
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+}
+
+test.classpath += configurations.developmentOnly
+
+mainClassName = "micronaut.plane.Application"
+
+// Java ソースの文字コードを指定
+[compileJava, compileTestJava]*.options*.encoding = "UTF-8"
+// Java バージョン
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
+
+kapt {
+    arguments {
+        // Micronaut でインクリメンタルアノテーション処理を有効化
+        arg("micronaut.processing.incremental", true)
+        // アノテーション処理対象クラスを指定する。カンマ区切りで複数指定可能
+        arg("micronaut.processing.annotations", "hello.*")
+    }
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+        //Will retain parameter names for Java reflection
+        javaParameters = true
+        // 「@ExperimentalCoroutinesApi」が付与された機能を利用する場合に追加
+        freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+        javaParameters = true
+        // 「@ExperimentalCoroutinesApi」が付与された機能を利用する場合に追加
+        freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+    }
+}
+
+// use JUnit 5 platform
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile){
+    options.encoding = "UTF-8"
+    options.compilerArgs.add('-parameters')
+}
+
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+tasks.withType(JavaExec) {
+    classpath += configurations.developmentOnly
+    jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+}
+

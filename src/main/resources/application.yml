@@ -1,0 +1,19 @@
+micronaut:
+  application:
+    name: micronaut-plane
+jackson:
+  # Jackson に Micronaut の Bean Introspection を利用させる設定
+  bean-introspection-module: true
+  serialization:
+    # インデント付きで出力
+    indentOutput: true
+    # 日付を配列ではなく、文字列として出力
+    writeDatesAsTimestamps: false
+    # ルートオブジェクトでデータを囲む
+    # XmlMapper では、ルートオブジェクトで囲む挙動を変更できないため、Json の出力を合わせるために必要。
+#    wrapRootValue: true
+  deserialization:
+    # 未定義のリクエストパラメータを渡した場合にエラーとならないようにする設定
+    failOnUnknownProperties: true
+    # 非浮動小数に BigInteger 型を使用する
+    useBigIntegerForInts: true
